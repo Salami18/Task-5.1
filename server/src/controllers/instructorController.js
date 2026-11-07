@@ -86,9 +86,9 @@ export async function searchInstructors(req, res, next) {
     
     const {name, department, role} = req.query;
     const filter = {};
-    if (name) filter.name = name;
-    if (department) filter.department = department;
-    if (role) filter.role = role;
+    if (name) filter.name = String(name);
+    if (department) filter.department = String(department);
+    if (role) filter.role = String(role);
     const instructors = await Instructor.find(filter).select('-password -apiKey -privateEmail -privatePhone').lean();
     res.json({ count: instructors.length, instructors });
   } catch (err) {
