@@ -9,10 +9,11 @@ import mongoSanitize from 'express-mongo-sanitize';
 
 const app = express();
 
-app.use(mongoSanitize());
+
 app.use(morgan('dev'));
 app.use(cors({ origin: 'http://localhost:5175', credentials: false }));
 app.use(express.json());
+app.use(mongoSanitize());
 
 app.get('/api/health', (req, res) => res.json({ ok: true }));
 
