@@ -89,7 +89,7 @@ export async function searchInstructors(req, res, next) {
     if (name) filter.name = name;
     if (department) filter.department = department;
     if (role) filter.role = role;
-    const instructors = await Instructor.find(filter).lean();
+    const instructors = await Instructor.find(filter).select('-password -apiKey -privateEmail -privatePhone').lean();
     res.json({ count: instructors.length, instructors });
   } catch (err) {
     next(err);
