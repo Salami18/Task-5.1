@@ -1,4 +1,5 @@
 import { Instructor } from '../models/Instructor.js';
+import bcrypt from 'bcryptjs';
 
 // =============================================================================
 //  INSTRUCTOR PORTAL CONTROLLER  —  ⚠️ INTENTIONALLY VULNERABLE (security lab)
@@ -23,17 +24,19 @@ function publicProfile(doc) {
     username: doc.username,
     department: doc.department,
     role: doc.role,
-    apiKey: doc.apiKey,
+    //do not return these
+   /* apiKey: doc.apiKey,
     privateEmail: doc.privateEmail,
-    privatePhone: doc.privatePhone
+    privatePhone: doc.privatePhone*/
   };
 }
+
 
 // POST /api/instructors/login
 export async function loginInstructor(req, res, next) {
   try {
     const { username, password } = req.body;
-    if (username === undefined || password === undefined) {
+    if (username === "" || password === "") {
       return res.status(400).json({ message: 'username and password are required' });
     }
 
@@ -43,9 +46,9 @@ export async function loginInstructor(req, res, next) {
     // filter that matches any account (authentication bypass). With
     // {"password":{"$regex":"^S"}} the success/failure response becomes an
     // oracle for extracting the stored password one character at a time.
-    const instructor = await Instructor.findOne({ username, password });
+    const instructor = await Instructor.findOne({ username });
 
-    if (!instructor) {
+    if (!instructor || !(await bcrypt.compare(password, instructor.password))) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
     return res.json({ instructor: publicProfile(instructor) });
@@ -79,7 +82,12 @@ export async function searchInstructors(req, res, next) {
     //   ?role[$ne]=instructor           -> operator injection, leaks superadmin
     //   ?username[$regex]=^admin        -> regex enumeration
     //   ?$where=this.password.length>10 -> server-side JavaScript execution
-    const filter = req.query;
+    
+    const {name, department, role} = req.query;
+    const filter = {};
+    if (name) filter.name = name;
+    if (department) filter.department = department;
+    if (role) filter.role = role;
     const instructors = await Instructor.find(filter).lean();
     res.json({ count: instructors.length, instructors });
   } catch (err) {

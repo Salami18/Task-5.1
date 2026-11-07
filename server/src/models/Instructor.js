@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
 
 // Instructor Portal account.
 //
@@ -16,11 +17,25 @@ const instructorSchema = new mongoose.Schema(
     role: { type: String, default: 'instructor' }, // 'instructor' | 'superadmin'
 
     // Sensitive "trophy" fields the directory hides but injection can leak.
-    apiKey: { type: String },
-    privateEmail: { type: String },
-    privatePhone: { type: String }
+    apiKey: { type: String, select: false },
+    privateEmail: { type: String, select: false },
+    privatePhone: { type: String, select: false }
   },
   { timestamps: true }
 );
+
+instructorSchema.pre('save', async function (next) {
+  // If the password hasn't changed (e.g., updating email), skip hashing
+  if (!this.isModified('password')) return next();
+
+  try {
+    const salt = await bcrypt.genSalt(12);
+    this.password = await bcrypt.hash(this.password, salt);
+    //const hashPass = this.password;
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
 
 export const Instructor = mongoose.model('Instructor', instructorSchema);
